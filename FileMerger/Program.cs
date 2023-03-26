@@ -69,7 +69,7 @@ class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error occurred: {ex.Message}");
+            Console.Error.WriteLine($"Error occurred: {ex.Message}");
         }
     }
 
