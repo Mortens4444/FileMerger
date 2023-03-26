@@ -2,58 +2,80 @@
 
 class Program
 {
+    private static readonly string[] SearchPatterns = new string[] { "*.asm", "*.pas", "*.c", "*.cpp", "*.c++", "*.java", "*.vb", "*.cs", "*.ts", "*.json" };
+    private static readonly string[] Excludeditems = new string[] { "obj", "bin", "node_modules", "package-lock.json", ".eslintrc.json" };
+
     static void Main(string[] args)
     {
-        //if (args.Length != 1)
-        //{
-        //    Console.WriteLine("Kérlek adj meg egy mappa elérési útvonalat az argumentumként!");
-        //    return;
-        //}
+        var inputFoldersAndFiles = new List<string>();
 
-        //string inputFolder = args[0]; // A bemeneti mappa elérési útvonala
-        string inputFolder = "C:\\Work\\Snake"; // A bemeneti mappa elérési útvonala
-        string outputFile = $"{Path.GetFileName(inputFolder)}-Output.txt"; // A kimeneti fájl neve
+        if (args.Length >= 0)
+        {
+            inputFoldersAndFiles = args.Where(arg => Directory.Exists(arg) || File.Exists(arg)).ToList();
+
+            var missingItems = args.Except(inputFoldersAndFiles);
+            if (missingItems.Any())
+            {
+                Console.Error.WriteLine($"Unable to find the following file or directory: {String.Join(", ", missingItems)}");
+            }
+        }
+
+        while (!inputFoldersAndFiles.Any())
+        {
+            Console.Clear();
+            Console.WriteLine("Please provide a folder to merge the files:");
+            var input = Console.ReadLine();
+            if (Directory.Exists(input) || File.Exists(input))
+            {
+                inputFoldersAndFiles.Add(input);
+            }
+        }
+
+        string outputFile = $"{Path.GetFileName(inputFoldersAndFiles.First())}-Merged.txt";
+        if (File.Exists(outputFile))
+        {
+            File.Delete(outputFile);
+        }
 
         try
         {
             using (var writer = new StreamWriter(outputFile))
             {
-                // Rekurzívan végigjárja a mappa összes fájlját és almappáját
-                foreach (string file in Directory.EnumerateFiles(inputFolder, "*.*", SearchOption.AllDirectories))
+                var files = new List<string>();
+
+                foreach (var inputFolderOrFile in inputFoldersAndFiles)
                 {
-                    // Csak a szöveges fájlokat dolgozza fel
-                    if (IsTextFile(file))
+                    if (Directory.Exists(inputFolderOrFile))
                     {
-                        string content = File.ReadAllText(file);
-                        writer.WriteLine(content);
+                        files.AddRange(SearchPatterns.SelectMany(pattern => Directory.EnumerateFiles(inputFolderOrFile, pattern, SearchOption.AllDirectories)));
                     }
+                    else
+                    {
+                        files.Add(inputFolderOrFile);
+                    }
+                }
+
+                var filteredFiles = files.Where(file => !ContainsAnyFolder(file, Excludeditems)).Distinct().ToList();
+
+                foreach (string file in filteredFiles)
+                {
+                    var content = File.ReadAllText(file);
+                    writer.WriteLine($"############## {file} ##############");
+                    writer.WriteLine(content);
                 }
             }
 
-            Console.WriteLine("A fájlok sikeresen összefűzve a következő fájlba: " + outputFile);
-            Console.ReadLine();
+            Console.WriteLine($"Files have been merged into: {AppDomain.CurrentDomain.BaseDirectory}{outputFile}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Hiba történt: " + ex.Message);
-            Console.ReadLine();
+            Console.WriteLine($"Error occurred: {ex.Message}");
         }
     }
 
-    // Ellenőrzi, hogy a fájl szöveges típusú-e
-    private static bool IsTextFile(string filePath)
+    private static bool ContainsAnyFolder(string filePath, string[] excludedFolders)
     {
-        string extension = Path.GetExtension(filePath).ToLower();
-        return extension switch
-        {
-            ".cs" //or
-            //".txt" or ".cpp" or ".js" or
-            //".c++" or ".asm" or ".csproj" or ".ts" or
-            //".config" or ".html" or ".css" or ".sln"
-
-            => true,
-
-            _ => false,
-        };
+        var parts = filePath.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
+        return parts.Intersect(excludedFolders, StringComparer.OrdinalIgnoreCase).Any();
     }
 }
