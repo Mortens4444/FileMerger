@@ -3,10 +3,11 @@
 class Program
 {
     private static readonly string[] SearchPatterns = new string[] { "*.asm", "*.pas", "*.c", "*.cpp", "*.c++", "*.java", "*.vb", "*.cs", "*.ts", "*.json" };
-    private static readonly string[] Excludeditems = new string[] { "obj", "bin", "node_modules", "package-lock.json", ".eslintrc.json" };
+    private static readonly string[] ExcludedItems = new string[] { "obj", "bin", ".git", "node_modules", "package-lock.json", ".eslintrc.json", "AssemblyInfo.cs", "MainForm.Designer.cs" };
 
     static void Main(string[] args)
     {
+        args = args.Select(path => path.TrimEnd('\\')).ToArray();
         var inputFoldersAndFiles = new List<string>();
 
         if (args.Length >= 0)
@@ -55,7 +56,7 @@ class Program
                     }
                 }
 
-                var filteredFiles = files.Where(file => !ContainsAnyFolder(file, Excludeditems)).Distinct().ToList();
+                var filteredFiles = files.Where(file => !ContainsAnyFolder(file, ExcludedItems)).Distinct().ToList();
 
                 foreach (string file in filteredFiles)
                 {
