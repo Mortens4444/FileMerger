@@ -2,8 +2,8 @@
 
 class Program
 {
-    private static readonly string[] SearchPatterns = new string[] { "*.asm", "*.pas", "*.c", "*.cpp", "*.c++", "*.java", "*.vb", "*.cs", "*.ts", "*.json" };
-    private static readonly string[] ExcludedItems = new string[] { "obj", "bin", ".git", "node_modules", "package-lock.json", ".eslintrc.json", "AssemblyInfo.cs", "MainForm.Designer.cs" };
+    private static readonly string[] SearchPatterns = new string[] { "*.asm", "*.pas", "*.c", "*.cpp", "*.c++", "*.java", "*.vb", "*.cs", "*.ts", "*.json", "*.xml" };
+    private static readonly string[] ExcludedItems = new string[] { "obj", "bin", ".git", "node_modules", "package-lock.json", ".eslintrc.json", "AssemblyInfo.cs", "MainForm.Designer.cs", ".idea" };
 
     static void Main(string[] args)
     {
@@ -61,8 +61,11 @@ class Program
                 foreach (string file in filteredFiles)
                 {
                     var content = File.ReadAllText(file);
-                    writer.WriteLine($"############## {file} ##############");
-                    writer.WriteLine(content);
+                    if (!content.Contains("auto-generated"))
+                    {
+                        writer.WriteLine($"############## {file} ##############");
+                        writer.WriteLine(content);
+                    }
                 }
             }
 
